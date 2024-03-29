@@ -5,11 +5,11 @@ import "./App.css";
 
 ReactDOM.render(
     <React.StrictMode>
-        <App />
+        <App/>
     </React.StrictMode>,
     document.getElementById('root')
 );
 
 function App() {
-    return (<ToDoList></ToDoList>)
+    return (<ToDoList/>)
 } export default App;
