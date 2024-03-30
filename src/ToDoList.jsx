@@ -151,8 +151,8 @@ function ToDoList() {
     // Delete a task
     function deleteTask(index) {
         // Delete the task from the list
-        setTasks(tasks.filter((task, i) => i !== index));
-        setIsUpdateVisible(isUpdateVisible.filter((isVisible, i) => i !== index));
+        setTasks(tasks.filter((i) => i !== index));
+        setIsUpdateVisible(isUpdateVisible.filter((i) => i !== index));
 
         // Show a success toast
         toast.success("Task deleted successfully!");
@@ -292,15 +292,15 @@ function ToDoList() {
                         <br/><br/>
 
                         <label>Priority:</label>
-                        <input type="radio" name="priority" value="Low" onChange={() => {
+                        <input type="radio" name="priority" value="Low" checked={priority === "Low"} onChange={() => {
                             setPriority("Low");
                             setIsPriorityValid(true);
                         }}/> Low<br/>
-                        <input type="radio" name="priority" value="Med" onChange={() => {
+                        <input type="radio" name="priority" value="Med" checked={priority === "Med"} onChange={() => {
                             setPriority("Med");
                             setIsPriorityValid(true);
                         }}/> Med<br/>
-                        <input type="radio" name="priority" value="High" onChange={() => {
+                        <input type="radio" name="priority" value="High" checked={priority === "High"} onChange={() => {
                             setPriority("High");
                             setIsPriorityValid(true);
                         }}/> High<br/>
@@ -308,7 +308,7 @@ function ToDoList() {
 
                         <br/>
                         <button onClick={(e) => updateTask(e)}><FontAwesomeIcon icon={faPencil}/> Update Task</button>
-                        <button className="button2" onClick={(e) => updateTask}><FontAwesomeIcon
+                        <button className="button2" onClick={() => setUpdatePopupVisible(false)}><FontAwesomeIcon
                             icon={faCancel}/> Cancel
                         </button>
                     </form>
