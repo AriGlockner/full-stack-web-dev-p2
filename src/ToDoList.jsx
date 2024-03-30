@@ -1,6 +1,8 @@
 import React, {useState} from 'react';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCancel, faPencil, faPlus, faPlust, faTrash} from "@fortawesome/free-solid-svg-icons";
+import {faCancel, faPencil, faPlus, faTrash} from "@fortawesome/free-solid-svg-icons";
+import {ToastContainer, toast} from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function ToDoList() {
     const [tasks, setTasks] = useState([]);
@@ -11,8 +13,10 @@ function ToDoList() {
     const [description, setDescription] = useState("");
     const [deadline, setDeadline] = useState("");
     const [priority, setPriority] = useState("");
-    const [isComplete, setIsComplete] = useState(false);
-    const [actions, setActions] = useState(["Edit", "Delete"]);
+    let isComplete = false;
+    //const [actions, setActions] = useState(["Edit", "Delete"]);
+    const [isUpdateVisible, setIsUpdateVisible] = useState(Array(tasks.length).fill(true));
+    let getIndex = 0;
 
     // Task Validations
     const [currentTask, setCurrentTask] = useState("");
@@ -26,27 +30,9 @@ function ToDoList() {
     const [addPopupVisible, setAddPopupVisible] = useState(false);
     const [updatePopupVisible, setUpdatePopupVisible] = useState(false);
 
-    // Add a new task to the list
-    function openAddPopup(event) {
-        event.preventDefault();
-
-        // Reset the task values
-        setTask("");
-        setDescription("");
-        setDeadline("");
-        setPriority("");
-
-        // Open the popup
-        setAddPopupVisible(true);
-    }
-
-    function addTask() {
-        // Validate Empty Fields
+    // Validate fields
+    function validateFields() {
         let invalid = false;
-        if (task === "") {
-            setIsTaskValid(false);
-            invalid = true;
-        }
         if (description === "") {
             setIsDescriptionValid(false);
             invalid = true;
@@ -59,6 +45,34 @@ function ToDoList() {
             setIsPriorityValid(false);
             invalid = true;
         }
+        return invalid;
+    }
+
+
+    // Add a new task to the list
+    function openAddPopup(event) {
+        event.preventDefault();
+
+        // Reset the task values
+        setTask("");
+        setDescription("");
+        setDeadline("");
+        setPriority("");
+        isComplete = false;
+
+        // Open the popup
+        setAddPopupVisible(true);
+    }
+
+    function addTask() {
+        // Validate Empty Fields
+        let invalid = validateFields();
+
+        if (task === "") {
+            setIsTaskValid(false);
+            invalid = true;
+        }
+
         // Validate that the task is unique
         tasks.forEach(t => {
             if (t.task === task) {
@@ -68,12 +82,15 @@ function ToDoList() {
         });
 
         if (invalid) {
-             return;
+            return;
         }
 
-
         // Add the task to the list
-        setTasks([...tasks, {task, description, deadline, priority, isComplete, actions}]);
+        setTasks([...tasks, {task, description, deadline, priority, isComplete}]);
+        setIsUpdateVisible([...isUpdateVisible, true])
+
+        // Show a success toast
+        toast.success("Task added successfully!");
 
         // Close the popup
         setAddPopupVisible(false);
@@ -84,6 +101,9 @@ function ToDoList() {
         setTasks(tasks.map((task, i) =>
             i === index ? {...task, isComplete: !task.isComplete} : task
         ));
+        setIsUpdateVisible(isUpdateVisible.map((isVisible, i) =>
+            i === index ? !isVisible : isVisible
+        ));
     }
 
     // Edit a task
@@ -91,6 +111,7 @@ function ToDoList() {
         event.preventDefault();
 
         // Set the task values equal to the task being edited
+        getIndex = index;
         setCurrentTask(tasks[index].task);
         setTask(tasks[index].task);
         setDescription(tasks[index].description);
@@ -101,13 +122,44 @@ function ToDoList() {
         setUpdatePopupVisible(true);
     }
 
+    function updateTask(event) {
+        event.preventDefault();
+
+        // Set the task values equal to the task being edited
+        setCurrentTask(tasks[getIndex].task);
+        setDescription(tasks[getIndex].description);
+        setDeadline(tasks[getIndex].deadline);
+        setPriority(tasks[getIndex].priority);
+
+        // Validate Empty Fields
+        if (validateFields()) {
+            return;
+        }
+
+        // Update the task in the list
+        let updatedTasks = tasks.copyWithin(0, tasks.length);
+        updatedTasks[getIndex] = {task, description, deadline, priority, isComplete};
+        setTasks(updatedTasks);
+
+        // Show a success toast
+        toast.success("Task updated successfully!");
+
+        // Close the popup
+        setUpdatePopupVisible(false);
+    }
+
     // Delete a task
     function deleteTask(index) {
+        // Delete the task from the list
         setTasks(tasks.filter((task, i) => i !== index));
+        setIsUpdateVisible(isUpdateVisible.filter((isVisible, i) => i !== index));
+
+        // Show a success toast
+        toast.success("Task deleted successfully!");
     }
 
     return (
-        <div className="ToDoList">Ï
+        <div className="ToDoList">
             {/* Title */}
             <div className="title">
                 <h1>To-Do List</h1>
@@ -136,15 +188,19 @@ function ToDoList() {
                             <tr key={index}>
                                 <td>{t.task}</td>
                                 <td>{t.description}</td>
-                                <td>{t.deadline}</td>
+                                <td>{new Date(t.deadline).toLocaleDateString('en-US')}</td>
                                 <td>{t.priority}</td>
                                 <td>
                                     <input type="checkbox" checked={t.isComplete}
                                            onChange={() => toggleComplete(index)}/>
                                 </td>
                                 <td>
-                                    <button onClick={(e) => openUpdatePopup(e, index)}><FontAwesomeIcon icon={faPencil}/> Update</button>
-                                    <button onClick={() => deleteTask(index)}><FontAwesomeIcon icon={faTrash}/> Delete</button>
+                                    {isUpdateVisible[index] &&
+                                        <button onClick={(e) => openUpdatePopup(e, index)}><FontAwesomeIcon
+                                            icon={faPencil}/> Update</button>}
+                                    <button className="button2" onClick={() => deleteTask(index)}><FontAwesomeIcon
+                                        icon={faTrash}/> Delete
+                                    </button>
                                 </td>
                             </tr>
                         )
@@ -187,23 +243,27 @@ function ToDoList() {
                             <br/><br/>
 
                             <label>Priority:</label>
-                            <input type="radio" name="priority" value="Low" onChange={() => {
-                                setPriority("Low");
-                                setIsPriorityValid(true);
-                            }}/> Low<br/>
-                            <input type="radio" name="priority" value="Med" onChange={() => {
-                                setPriority("Med");
-                                setIsPriorityValid(true);
-                            }}/> Med<br/>
-                            <input type="radio" name="priority" value="High" onChange={() => {
-                                setPriority("High");
-                                setIsPriorityValid(true);
-                            }}/> High<br/>
+                            <input type="radio" name="priority" value="Low" checked={priority === "Low"}
+                                   onChange={() => {
+                                       setPriority("Low");
+                                       setIsPriorityValid(true);
+                                   }}/> Low<br/>
+                            <input type="radio" name="priority" value="Med" checked={priority === "Med"}
+                                   onChange={() => {
+                                       setPriority("Med");
+                                       setIsPriorityValid(true);
+                                   }}/> Med<br/>
+                            <input type="radio" name="priority" value="High" checked={priority === "High"}
+                                   onChange={() => {
+                                       setPriority("High");
+                                       setIsPriorityValid(true);
+                                   }}/> High<br/>
                             {!isPriorityValid && <p style={{color: "red"}}>Priority is required</p>}
                             <br/>
 
                             <br/>
-                            <button type="button" onClick={(e) => addTask(e)}><FontAwesomeIcon icon={faPlus}/> Add Task
+                            <button type="button" onClick={(e) => addTask(e)}>
+                                <FontAwesomeIcon icon={faPlus}/> Add Task
                             </button>
                             <button type="submit" className="button2" onClick={() => setAddPopupVisible(false)}>
                                 <FontAwesomeIcon icon={faCancel}/> Cancel
@@ -219,12 +279,14 @@ function ToDoList() {
                     <form className="popup-fields">
                         <label>Description:</label>
                         <input id="task-update-description" type="text" placeholder="Description" value={description}
-                               onChange={(e) => setDescription(e.target.value)} style={{borderColor: isDescriptionValid ? "" : "red"}}/>
+                               onChange={(e) => setDescription(e.target.value)}
+                               style={{borderColor: isDescriptionValid ? "" : "red"}}/>
                         {!isDescriptionValid && <p style={{color: "red"}}>Description is required</p>}
                         <br/><br/>
 
                         <label>Deadline:</label>
-                        <input id="task-update-deadline" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)}
+                        <input id="task-update-deadline" type="date" value={deadline}
+                               onChange={(e) => setDeadline(e.target.value)}
                                style={{borderColor: isDeadlineValid ? "" : "red"}}/>
                         {!isDeadlineValid && <p style={{color: "red"}}>Deadline is required</p>}
                         <br/><br/>
@@ -245,11 +307,15 @@ function ToDoList() {
                         {!isPriorityValid && <p style={{color: "red"}}>Priority is required</p>}
 
                         <br/>
-                        <button type="button" onClick={(e) => addTask(e)}><FontAwesomeIcon icon={faPencil}/> Update Task</button>
-                        <button type="submit" className="button2" onClick={() => setUpdatePopupVisible(false)}><FontAwesomeIcon icon={faCancel}/> Cancel</button>
+                        <button onClick={(e) => updateTask(e)}><FontAwesomeIcon icon={faPencil}/> Update Task</button>
+                        <button className="button2" onClick={(e) => updateTask}><FontAwesomeIcon
+                            icon={faCancel}/> Cancel
+                        </button>
                     </form>
                 </div>
-                </div>)}
+            </div>)}
+
+            <ToastContainer/>
 
         </div>);
 }
