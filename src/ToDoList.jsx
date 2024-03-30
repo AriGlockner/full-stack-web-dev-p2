@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPencil, faPlus, faTrash, faBars} from "@fortawesome/free-solid-svg-icons";
 import {ToastContainer, toast} from 'react-toastify';
@@ -7,7 +7,7 @@ import TaskDialogue from "./TaskDialogue";
 import moment from "moment";
 
 function ToDoList() {
-    const [tasks, setTasks] = useState([]);
+    const [tasks, setTasks] = useState(JSON.parse(localStorage.getItem("tasks")) || []);
     const headers = ["Task", "Description", "Deadline", "Priority", "Is Complete", "Actions"];
     const [isEditMode, setIsEditMode] = useState(false);
 
@@ -32,6 +32,11 @@ function ToDoList() {
     const [addPopupVisible, setAddPopupVisible] = useState(false);
     const [updatePopupVisible, setUpdatePopupVisible] = useState(false);
 
+    // Update the local storage when tasks change
+    useEffect(() => {
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+    }, [tasks]);
+
     // Validate fields
     function validateFields() {
         let invalid = false;
@@ -49,7 +54,6 @@ function ToDoList() {
         }
         return invalid;
     }
-
 
     // Add a new task to the list
     function openAddPopup(event) {
