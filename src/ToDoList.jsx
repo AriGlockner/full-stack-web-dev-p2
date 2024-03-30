@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 function ToDoList() {
     const [tasks, setTasks] = useState([]);
     const headers = ["Task", "Description", "Deadline", "Priority", "Is Complete", "Actions"];
+    const [isEditMode, setIsEditMode] = useState(false);
 
     // Task Values
     const [task, setTask] = useState("");
@@ -14,7 +15,6 @@ function ToDoList() {
     const [deadline, setDeadline] = useState("");
     const [priority, setPriority] = useState("");
     let isComplete = false;
-    //const [actions, setActions] = useState(["Edit", "Delete"]);
     const [isUpdateVisible, setIsUpdateVisible] = useState(Array(tasks.length).fill(true));
     let getIndex = 0;
 
@@ -61,6 +61,7 @@ function ToDoList() {
         isComplete = false;
 
         // Open the popup
+        setIsEditMode(false);
         setAddPopupVisible(true);
     }
 
@@ -119,6 +120,7 @@ function ToDoList() {
         setPriority(tasks[index].priority);
 
         // Open the popup
+        setIsEditMode(true);
         setUpdatePopupVisible(true);
     }
 
@@ -210,21 +212,27 @@ function ToDoList() {
                 </table>
             </div>
 
-            {/* Add Task Popup */}
-            {addPopupVisible && (
+            {/* Popups for Adding/Updating a task */}
+            { (addPopupVisible || updatePopupVisible) && (
                 <div className="popup">
                     <div className="popup-content">
-                        <h2>Add Task</h2>
-                        <form className="popup-fields">
+                        <h2>
+                            {isEditMode ? <FontAwesomeIcon icon={faPencil}/> : <FontAwesomeIcon icon={faPlus}/>}
+                            {isEditMode ? " Update Task" : " Add Task"}
+                        </h2>
 
-                            <label>Task:</label>
-                            <input id="task-add-task" type="text" placeholder="Task" onChange={(e) => {
-                                setTask(e.target.value);
-                                setIsTaskValid(true);
-                            }} style={{borderColor: isTaskValid ? "" : "red"}}/>
-                            {!isTaskValid && <p style={{color: "red"}}>Task is required</p>}
-                            {!isTaskUnique && <p style={{color: "red"}}>Task must be unique</p>}
-                            <br/><br/>
+                        <form className="popup-fields">
+                            {!isEditMode && (
+                                <>
+                                    <label>Task:</label>
+                                    <input id="task-add-task" type="text" placeholder="Task" onChange={(e) => {
+                                        setTask(e.target.value);
+                                        setIsTaskValid(true);
+                                    }} style={{borderColor: isTaskValid ? "" : "red"}}/>
+                                    {!isTaskValid && <p style={{color: "red"}}>Task is required</p>}
+                                    {!isTaskUnique && <p style={{color: "red"}}>Task must be unique</p>}
+                                    <br/><br/>
+                                </>)}
 
                             <label>Description:</label>
                             <input id="task-add-description" type="text" placeholder="Description" onChange={(e) => {
@@ -262,58 +270,17 @@ function ToDoList() {
                             <br/>
 
                             <br/>
-                            <button type="button" onClick={(e) => addTask(e)}>
-                                <FontAwesomeIcon icon={faPlus}/> Add Task
+                            <button type="button" onClick={isEditMode ? (e) => updateTask(e) : (e) => addTask(e)}>
+                                {isEditMode ? <FontAwesomeIcon icon={faPencil}/> : <FontAwesomeIcon icon={faPlus}/>}
+                                {isEditMode ? " Update Task" : " Add Task"}
                             </button>
-                            <button type="submit" className="button2" onClick={() => setAddPopupVisible(false)}>
+                            <button type="submit" className="button2" onClick={() => {setAddPopupVisible(false); setUpdatePopupVisible(false);}}>
                                 <FontAwesomeIcon icon={faCancel}/> Cancel
                             </button>
                         </form>
                     </div>
-                </div>)}
-
-            {/* Update Task Popup */}
-            {updatePopupVisible && (<div className="popup">
-                <div className="popup-content">
-                    <h2>Update Task: {currentTask}</h2>
-                    <form className="popup-fields">
-                        <label>Description:</label>
-                        <input id="task-update-description" type="text" placeholder="Description" value={description}
-                               onChange={(e) => setDescription(e.target.value)}
-                               style={{borderColor: isDescriptionValid ? "" : "red"}}/>
-                        {!isDescriptionValid && <p style={{color: "red"}}>Description is required</p>}
-                        <br/><br/>
-
-                        <label>Deadline:</label>
-                        <input id="task-update-deadline" type="date" value={deadline}
-                               onChange={(e) => setDeadline(e.target.value)}
-                               style={{borderColor: isDeadlineValid ? "" : "red"}}/>
-                        {!isDeadlineValid && <p style={{color: "red"}}>Deadline is required</p>}
-                        <br/><br/>
-
-                        <label>Priority:</label>
-                        <input type="radio" name="priority" value="Low" checked={priority === "Low"} onChange={() => {
-                            setPriority("Low");
-                            setIsPriorityValid(true);
-                        }}/> Low<br/>
-                        <input type="radio" name="priority" value="Med" checked={priority === "Med"} onChange={() => {
-                            setPriority("Med");
-                            setIsPriorityValid(true);
-                        }}/> Med<br/>
-                        <input type="radio" name="priority" value="High" checked={priority === "High"} onChange={() => {
-                            setPriority("High");
-                            setIsPriorityValid(true);
-                        }}/> High<br/>
-                        {!isPriorityValid && <p style={{color: "red"}}>Priority is required</p>}
-
-                        <br/>
-                        <button onClick={(e) => updateTask(e)}><FontAwesomeIcon icon={faPencil}/> Update Task</button>
-                        <button className="button2" onClick={() => setUpdatePopupVisible(false)}><FontAwesomeIcon
-                            icon={faCancel}/> Cancel
-                        </button>
-                    </form>
                 </div>
-            </div>)}
+            )}
 
             <ToastContainer/>
 
